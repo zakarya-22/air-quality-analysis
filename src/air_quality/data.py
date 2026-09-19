@@ -19,6 +19,8 @@ def load_datasets(data_dir: Path = DEFAULT_DATA_DIR) -> tuple[pd.DataFrame, pd.D
     """
     # TODO: read train.csv and test.csv from data_dir with pd.read_csv, and
     # return them as a (train_df, test_df) tuple
+    return pd.read_csv( data_dir / "train.csv") , pd.read_csv( data_dir / "test.csv")
+
 
 
 def restrict_to_scope(
@@ -42,8 +44,21 @@ def restrict_to_scope(
     - DataFrame filtered to the given cities and columns, index reset
     """
     # TODO: filter df to the given cities and columns, then, if max_rows_per_city
+    df_filtered= df[columns]
+    df_filtered= df_filtered[df_filtered['city'].isin(cities)]
+    
+    if max_rows_per_city is None:
+        return df_filtered.reset_index(drop=True)
+    
+    L=[] 
+    for city in cities:
+        df_temp= df_filtered[df_filtered['city']==city]
+        n_samples = min(len(df_temp), max_rows_per_city)
+        if n_samples>0:
+            L.append(df_temp.sample(n_samples,random_state= random_state))
     # is set, draw a reproducible random sample of at most that many rows for
     # each city and concatenate the results back into a single DataFrame
+    return pd.concat(L,ignore_index= True)
 
 
 
@@ -67,8 +82,13 @@ def fill_missing_by_city(
     - DataFrame with the given columns filled, one city at a time
     """
     # TODO: sort by city_col and date_col, then for each column, group by
+    df_copy= df.copy()
+    sorted_df= df_copy.sort_values(by=[city_col ,date_col]).reset_index(drop=True)
     # city_col and apply forward-fill followed by backward-fill within each
+    for column in columns:
+        sorted_df[column] = sorted_df.groupby(city_col)[column].transform(lambda x: x.ffill().bfill())
     # group with groupby().transform() — never fill across cities
+    return sorted_df
 
 
 # ============================================================================

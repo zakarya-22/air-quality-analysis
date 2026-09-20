@@ -79,7 +79,7 @@ class AdvancedPipelineConfig:
 
     train_city: str = "Kampala"
     test_city: str = "Bujumbura"
-    cities: list[str] = field(
+    ALL_CITIES: list[str] = field(
         default_factory=lambda: ["Kampala", "Nairobi", "Lagos", "Bujumbura"]
     )
     columns: list[str] = field(default_factory=lambda: list(DEFAULT_COLUMNS))
@@ -105,3 +105,29 @@ def run_advanced(config: AdvancedPipelineConfig | None = None) -> dict:
     - dict of metrics — the exact shape depends on which modules you have added
     """
     # TODO: build this up module by module, following content/session3/'s pages
+    config = config or AdvancedPipelineConfig()
+    train_df, _ = data.load_datasets()
+    cities = config.ALL_CITIES
+
+    scoped = data.restrict_to_scope(
+        train_df, cities, DEFAULT_COLUMNS)
+    
+    fillable_columns = [c for c in scoped.columns if c not in ("city", "date")]
+
+
+    shitty_columns = data.columns_above_missing_threshold(scoped,0.7)
+    cleaned= data.drop_columns(scoped,shitty_columns)
+    cleaned = data.fill_missing_by_city(cleaned, fillable_columns,'city','date')
+    
+    enriched = features.add_temporal_features(cleaned)
+    feature_cols = features.feature_columns(enriched)
+    
+    #for evalutation by groups no need for already splitted data
+    """train_split = enriched[enriched["city"] == config.train_city]
+    test_split = enriched[enriched["city"] == config.test_city]"""
+    
+    
+    
+    model = LinearRegression()
+    #return evaluation.evaluate_manual_split(model, train_split, test_split, feature_cols)
+    return evaluation.evaluate_group_cv(model, enriched,feature_cols=feature_cols , groups_col="city",target_col= "pm2_5")

@@ -86,7 +86,8 @@ def fill_missing_by_city(
     sorted_df= df_copy.sort_values(by=[city_col ,date_col]).reset_index(drop=True)
     # city_col and apply forward-fill followed by backward-fill within each
     for column in columns:
-        sorted_df[column] = sorted_df.groupby(city_col)[column].transform(lambda x: x.ffill().bfill())
+        if column in df.columns:
+            sorted_df[column] = sorted_df.groupby(city_col)[column].transform(lambda x: x.ffill().bfill())
     # group with groupby().transform() — never fill across cities
     return sorted_df
 
@@ -112,7 +113,12 @@ def columns_above_missing_threshold(df: pd.DataFrame, threshold: float = 0.7) ->
     """
     # TODO: compute the fraction of missing values per column, then return the
     # names of the columns whose fraction is strictly above threshold
-
+    L=[]
+    DF= df.isna().mean()
+    for x,y in DF.items():
+        if y> threshold:
+            L.append(x)
+    return L
 
 def drop_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     """
@@ -127,3 +133,6 @@ def drop_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     """
     # TODO: drop the given columns from df, ignoring any name that is not
     # actually a column of df
+    columns_to_drop= [col for col in columns if col in df.columns]
+    clean = df.copy()
+    return clean.drop(columns=columns_to_drop)

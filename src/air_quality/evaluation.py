@@ -22,8 +22,8 @@ def regression_metrics(y_true, y_pred) -> dict[str, float]:
     # and return them in a dict with keys "rmse", "mae", "r2"
 
     rmse = mean_squared_error(y_true,y_pred)**0.5
-    mae = mean_absolute_error(y_pred,y_true)
-    r2= r2_score(y_pred,y_true)
+    mae = mean_absolute_error(y_true,y_pred)
+    r2= r2_score(y_true,y_pred)
     L=[rmse,mae,r2]
     d={"rmse":rmse,"mae":mae,"r2":r2}
     return d
@@ -56,7 +56,7 @@ def evaluate_manual_split(
     model.fit(train_df[feature_cols],train_df[target_col])
     predictions= model.predict(test_df[feature_cols])
 
-    return regression_metrics(predictions,test_df[target_col])
+    return regression_metrics(test_df[target_col],predictions)
 
 
 # ============================================================================
@@ -101,7 +101,37 @@ def evaluate_group_cv(
     # each fold's training rows, evaluate it on the held-out group with
     # regression_metrics, then aggregate the mean and std of each metric
     # across folds
-
-
-
+    
+    x= df[feature_cols]
+    y= df[target_col]
+    d={}
+    d["folds"]= []    
+    n= df[groups_col].nunique()
+    group_kfold = GroupKFold(n_splits=n)
+    groups= df[groups_col]
+    
+    for (train_idx, test_idx) in group_kfold.split(x, y, groups=groups):
+        
+                        
+        x_train, x_test = x.iloc[train_idx], x.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+        
+        cloned_model= clone(model)
+        cloned_model.fit(x_train, y_train)
+        predictions= cloned_model.predict(x_test)
+        
+        fold_dict= regression_metrics( y_test , predictions )  
+        fold_dict["test_group"]= df[groups_col].iloc[test_idx[0]]
+        
+        d["folds"].append(fold_dict)
+    
+    folds_df = pd.DataFrame(d["folds"])
+    d["r2_mean"]= float(folds_df['r2'].mean())
+    d["rmse_mean"]= float(folds_df['rmse'].mean())
+    d["mae_mean"]= float(folds_df['mae'].mean())
+    d["mae_std"]= float(folds_df['mae'].std())
+    d["rmse_std"]= float(folds_df['rmse'].std())
+    d["r2_std"]= float(folds_df['r2'].std())
+    
+    return d
 

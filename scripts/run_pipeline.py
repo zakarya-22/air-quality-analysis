@@ -3,7 +3,7 @@
 import argparse
 import json
 
-from air_quality.workflows import PipelineConfig, run_baseline
+from air_quality.workflows import AdvancedPipelineConfig, run_advanced
 
 
 def parse_args() -> argparse.Namespace:
@@ -15,8 +15,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    config = PipelineConfig(train_city=args.train_city, test_city=args.test_city)
-    metrics = run_baseline(config)
+    config = AdvancedPipelineConfig(train_city=args.train_city, test_city=args.test_city)
+    metrics = run_advanced(config)
     print(json.dumps(metrics, indent=2))
 
 

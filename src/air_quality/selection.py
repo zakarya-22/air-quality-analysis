@@ -3,7 +3,6 @@
 import pandas as pd
 from sklearn.feature_selection import RFE, SelectKBest, f_regression
 
-
 def select_k_best_features(
     df: pd.DataFrame,
     feature_cols: list[str],
@@ -28,7 +27,13 @@ def select_k_best_features(
     # TODO: fit SelectKBest(score_func=f_regression, k=k) on df[feature_cols]
     # and df[target_col], then use its get_support() boolean mask to return
     # the corresponding names from feature_cols
-
+    x= df[feature_cols]
+    y= df[target_col]
+    
+    selector= SelectKBest(score_func=f_regression,k=k).fit(x,y)
+    
+    return df[feature_cols].columns[selector.get_support()].tolist()
+    
 
 def select_features_rfe(
     model,
@@ -60,3 +65,9 @@ def select_features_rfe(
     # TODO: fit RFE(estimator=model, n_features_to_select=n_features_to_select)
     # on df[feature_cols] and df[target_col], then use its get_support()
     # boolean mask the same way as select_k_best_features
+    
+    x= df[feature_cols]
+    y= df[target_col]
+    selector= RFE(estimator=model, n_features_to_select=n_features_to_select).fit(x,y)
+
+    return df[feature_cols].columns[selector.get_support()].to_list()

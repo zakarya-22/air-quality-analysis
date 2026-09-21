@@ -4,7 +4,11 @@ from dataclasses import dataclass, field
 
 from sklearn.linear_model import LinearRegression
 
-from air_quality import data, evaluation, features
+from air_quality import data, evaluation, features, selection
+
+from air_quality import tuning
+
+
 
 DEFAULT_COLUMNS = [
     "city",
@@ -109,8 +113,9 @@ def run_advanced(config: AdvancedPipelineConfig | None = None) -> dict:
     train_df, _ = data.load_datasets()
     cities = config.ALL_CITIES
 
+    # on scope  sur toutes les colonnes et non pas que default
     scoped = data.restrict_to_scope(
-        train_df, cities, DEFAULT_COLUMNS)
+        train_df, cities, train_df.columns)
     
     fillable_columns = [c for c in scoped.columns if c not in ("city", "date")]
 
@@ -120,7 +125,10 @@ def run_advanced(config: AdvancedPipelineConfig | None = None) -> dict:
     cleaned = data.fill_missing_by_city(cleaned, fillable_columns,'city','date')
     
     enriched = features.add_temporal_features(cleaned)
+    
+    #we choose columns with skb and rfe which is better than human selection after filtering numerical columns with feature_columns
     feature_cols = features.feature_columns(enriched)
+    feature_cols =  selection.select_features_rfe(LinearRegression(),enriched,feature_cols,"pm2_5",8)
     
     #for evalutation by groups no need for already splitted data
     """train_split = enriched[enriched["city"] == config.train_city]
@@ -128,6 +136,11 @@ def run_advanced(config: AdvancedPipelineConfig | None = None) -> dict:
     
     
     
-    model = LinearRegression()
+    #model = LinearRegression()
     #return evaluation.evaluate_manual_split(model, train_split, test_split, feature_cols)
-    return evaluation.evaluate_group_cv(model, enriched,feature_cols=feature_cols , groups_col="city",target_col= "pm2_5")
+    #return evaluation.evaluate_group_cv(model, enriched,feature_cols=feature_cols , groups_col="city",target_col= "pm2_5")
+
+    param_grid= {"max_depth": [3, 5], "learning_rate": [0.05, 0.2]}
+    return tuning.tune_xgboost(enriched,feature_cols=feature_cols,param_grid=param_grid, target_col='pm2_5', groups_col="city" )
+
+    

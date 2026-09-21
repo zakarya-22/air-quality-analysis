@@ -7,7 +7,8 @@ this module never requires it to be installed.
 
 import pandas as pd
 from sklearn.model_selection import GridSearchCV, GroupKFold
-
+from air_quality import evaluation
+from xgboost import XGBRegressor
 
 def tune_xgboost(
     df: pd.DataFrame,
@@ -49,5 +50,34 @@ def tune_xgboost(
     # grid.best_params_/grid.best_score_/grid.cv_results_ (rmse/mae come back
     # negative from "neg_..." scorers — negate them back to plain values; r2
     # does not need negating)
+    cv= GroupKFold(n_splits=df[groups_col].nunique())
+    scoring= {"rmse": "neg_root_mean_squared_error", 
+              "mae": "neg_mean_absolute_error",
+              "r2": "r2"}
+    x= df[feature_cols]
+    y= df[target_col]
+    
+    xgb_model = XGBRegressor(n_estimators=100, random_state=42)
+
+    grid = GridSearchCV(xgb_model,param_grid, cv=cv,scoring=scoring
+    ,refit="rmse")
+    
+    grid.fit(x, y, groups=df[groups_col])
+        
+    cv_results = [
+      {"params": p, "rmse": -rmse, "mae": -mae, "r2": r2}
+      for p, rmse, mae, r2 in zip(
+          grid.cv_results_["params"],
+          grid.cv_results_["mean_test_rmse"],
+          grid.cv_results_["mean_test_mae"],
+          grid.cv_results_["mean_test_r2"],
+      )
+    ]
+        
+    d={"best_params":grid.best_params_
+       ,"best_rmse": -grid.best_score_
+        ,"cv_results": cv_results}
+    return d
+
 
 

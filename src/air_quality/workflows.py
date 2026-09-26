@@ -4,9 +4,17 @@ from dataclasses import dataclass, field
 
 from sklearn.linear_model import LinearRegression
 
-from air_quality import data, evaluation, features, selection
+from air_quality import data, evaluation, features, selection, transformers
 
 from air_quality import tuning
+
+from sklearn.pipeline import Pipeline
+
+from sklearn.model_selection import cross_val_score, GroupKFold
+
+from sklearn.feature_selection import RFE
+
+
 
 
 
@@ -113,34 +121,55 @@ def run_advanced(config: AdvancedPipelineConfig | None = None) -> dict:
     train_df, _ = data.load_datasets()
     cities = config.ALL_CITIES
 
+    EXCLUDED_RAW_COLUMNS = {"id", "site_id", "country", "month"}
+    columns = [c for c in train_df.columns if c not in EXCLUDED_RAW_COLUMNS]
+
     # on scope  sur toutes les colonnes et non pas que default
     scoped = data.restrict_to_scope(
-        train_df, cities, train_df.columns)
+        train_df, cities, columns)
     
-    fillable_columns = [c for c in scoped.columns if c not in ("city", "date")]
-
-
-    shitty_columns = data.columns_above_missing_threshold(scoped,0.7)
-    cleaned= data.drop_columns(scoped,shitty_columns)
-    cleaned = data.fill_missing_by_city(cleaned, fillable_columns,'city','date')
-    
-    enriched = features.add_temporal_features(cleaned)
-    
-    #we choose columns with skb and rfe which is better than human selection after filtering numerical columns with feature_columns
+    enriched = features.add_temporal_features(scoped)
     feature_cols = features.feature_columns(enriched)
-    feature_cols =  selection.select_features_rfe(LinearRegression(),enriched,feature_cols,"pm2_5",8)
+
+    """
+    fillable_columns = [c for c in scoped.columns if c not in ("city", "date","site_latitude",
+            "site_longitude")]
     
-    #for evalutation by groups no need for already splitted data
-    """train_split = enriched[enriched["city"] == config.train_city]
+
+    #shitty_columns = data.columns_above_missing_threshold(scoped,0.7)
+    #cleaned= data.drop_columns(scoped,shitty_columns)
+    #cleaned = data.fill_missing_by_city(cleaned, fillable_columns,'city','date')
+    
+    
+
+    #we choose columns with skb and rfe which is better than human selection after filtering numerical columns with feature_columns
+    feature_cols =  selection.select_features_rfe(LinearRegression(),enriched,feature_cols,"pm2_5",8)
+    target_col='pm2_5'
+    
+    train_split = enriched[enriched["city"] == config.train_city]
     test_split = enriched[enriched["city"] == config.test_city]"""
     
+    #Pipeline
+    chained_pipe = Pipeline([
+    ("cleaner", transformers.AirQualityCleaner()),
+    ("selector", RFE(LinearRegression(),n_features_to_select=8)),
+    ("model", LinearRegression())
+    ])
     
+    
+    
+    chained_scores = cross_val_score(
+        chained_pipe, enriched,enriched['pm2_5'], groups=enriched['city'], cv= GroupKFold(n_splits=4),
+        scoring="neg_root_mean_squared_error")
+    
+    print("rmse per fold:", -chained_scores)
+    print("rmse mean:", -chained_scores.mean()) 
     
     #model = LinearRegression()
     #return evaluation.evaluate_manual_split(model, train_split, test_split, feature_cols)
     #return evaluation.evaluate_group_cv(model, enriched,feature_cols=feature_cols , groups_col="city",target_col= "pm2_5")
-
+    """
     param_grid= {"max_depth": [3, 5], "learning_rate": [0.05, 0.2]}
-    return tuning.tune_xgboost(enriched,feature_cols=feature_cols,param_grid=param_grid, target_col='pm2_5', groups_col="city" )
+    return tuning.tune_xgboost(enriched,feature_cols=feature_cols,param_grid=param_grid, target_col='pm2_5', groups_col="city" )"""
 
     

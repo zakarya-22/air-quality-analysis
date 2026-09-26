@@ -44,6 +44,8 @@ class AirQualityCleaner(BaseEstimator, TransformerMixin):
         # TODO: set self.columns_to_drop_ to
         # data.columns_above_missing_threshold(X, self.missing_threshold),
         # then return self
+        self.columns_to_drop_= data.columns_above_missing_threshold(X,self.missing_threshold)
+        return self
 
     def transform(self, X):
         """
@@ -62,3 +64,8 @@ class AirQualityCleaner(BaseEstimator, TransformerMixin):
         # what remains per city with data.fill_missing_by_city (every column
         # except "city"/"date"), then return only the numeric feature columns
         # (features.feature_columns) of the result
+        columns_to_drop= self.columns_to_drop_
+        X_clean = data.drop_columns(X,columns= columns_to_drop)
+        X_clean = data.fill_missing_by_city(X_clean, X_clean.columns,'city','date')
+        return X_clean[features.feature_columns(X_clean,"pm2_5")]
+        

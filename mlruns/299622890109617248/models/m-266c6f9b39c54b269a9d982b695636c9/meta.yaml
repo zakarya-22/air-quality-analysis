@@ -1,0 +1,10 @@
+artifact_location: file:///home/boume/data-science-toolkit/air-quality/mlruns/299622890109617248/models/m-266c6f9b39c54b269a9d982b695636c9/artifacts
+creation_timestamp: 1790511691766
+experiment_id: '299622890109617248'
+last_updated_timestamp: 1790511694901
+model_id: m-266c6f9b39c54b269a9d982b695636c9
+model_type: null
+name: model
+source_run_id: fe81bf43f80c4f9dbf805c7426444012
+status: 2
+status_message: null

@@ -1,0 +1,14 @@
+artifact_uri: file:///home/boume/data-science-toolkit/air-quality/mlruns/299622890109617248/149aba7b97fb41fca88fd55e65cf6134/artifacts
+end_time: 1790512464068
+entry_point_name: ''
+experiment_id: '299622890109617248'
+lifecycle_stage: active
+run_id: 149aba7b97fb41fca88fd55e65cf6134
+run_name: air_quality_model
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1790512460228
+status: 3
+tags: []
+user_id: boume

@@ -1,0 +1,14 @@
+artifact_uri: file:///home/boume/data-science-toolkit/air-quality/notebooks/session3/mlruns_registry_demo/633445724452652697/fd8d488bc6d64c5d9612453b9bb1ffb8/artifacts
+end_time: 1790507281655
+entry_point_name: ''
+experiment_id: '633445724452652697'
+lifecycle_stage: active
+run_id: fd8d488bc6d64c5d9612453b9bb1ffb8
+run_name: welcoming-zebra-7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1790507278593
+status: 3
+tags: []
+user_id: boume

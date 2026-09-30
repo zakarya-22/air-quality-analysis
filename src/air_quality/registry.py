@@ -41,8 +41,15 @@ def register_pipeline(
     # as a context manager and call mlflow.sklearn.log_model(pipeline,
     # name="model", registered_model_name=model_name) inside it; return
     # str(model_info.registered_model_version)
-
-
+    import mlflow
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment(experiment_name)
+    with mlflow.start_run(run_name=model_name):
+        model_info=mlflow.sklearn.log_model(pipeline, 
+            name='model' ,registered_model_name=model_name)
+        return str(model_info.registered_model_version)
+        
+   
 
 
 def promote_to_champion(model_name: str, version: str, tracking_uri: str = DEFAULT_TRACKING_URI) -> None:
@@ -63,8 +70,10 @@ def promote_to_champion(model_name: str, version: str, tracking_uri: str = DEFAU
     # TODO: import mlflow, call mlflow.set_tracking_uri(tracking_uri), then
     # mlflow.MlflowClient().set_registered_model_alias(model_name,
     # "champion", version)
-
-
+    import mlflow
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.MlflowClient().set_registered_model_alias(model_name,"champion",version)
+    
 
 def load_champion(model_name: str, tracking_uri: str = DEFAULT_TRACKING_URI):
     """
@@ -81,4 +90,6 @@ def load_champion(model_name: str, tracking_uri: str = DEFAULT_TRACKING_URI):
     """
     # TODO: import mlflow, call mlflow.set_tracking_uri(tracking_uri), then
     # return mlflow.sklearn.load_model(f"models:/{model_name}@champion")
-
+    import mlflow
+    mlflow.set_tracking_uri(tracking_uri)
+    return mlflow.sklearn.load_model(f"models:/{model_name}@champion")

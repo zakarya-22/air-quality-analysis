@@ -1,0 +1,22 @@
+artifact_path: file:///home/boume/data-science-toolkit/air-quality/mlruns/299622890109617248/models/m-f94ce31a8fd74738b0ca14154f9993e2/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.14
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.2
+mlflow_version: 3.1.4
+model_id: m-f94ce31a8fd74738b0ca14154f9993e2
+model_size_bytes: 4557
+model_uuid: m-f94ce31a8fd74738b0ca14154f9993e2
+prompts: null
+run_id: 149aba7b97fb41fca88fd55e65cf6134
+utc_time_created: '2026-09-27 12:34:20.269921'
